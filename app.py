@@ -1,43 +1,24 @@
-import streamlit as st
-
-from ui import inject_css, render_header, render_room_output, render_empty_state
-from student_logic import craft_room_story
-
-st.set_page_config(
-    page_title="AI Room Story Crafter",
-    page_icon="ℹ️",
-    layout="centered",
-)
-
-inject_css()
-render_header()
-
-if "room_data" not in st.session_state:
-    st.session_state.room_data = None
-
-room_name = st.text_input("Room Name", placeholder="e.g. Hall of Fractured Hours")
-theme = st.text_input("Theme", placeholder="e.g. ancient crystal vault")
-mood = st.selectbox(
-    "Mood",
-    ["Mysterious", "Magical", "Dark", "Ancient", "Dreamlike"],
-)
-
-generate_clicked = st.button("Craft Room Story", use_container_width=True)
-
-if generate_clicked:
-    if room_name.strip() and theme.strip():
-        st.session_state.room_data = craft_room_story(
-            room_name=room_name.strip(),
-            theme=theme.strip(),
-            mood=mood,
-        )
-    else:
-        st.session_state.room_data = None
-        st.warning("Please enter both Room Name and Theme.")
-
-room_data = st.session_state.room_data
-
-if room_data:
-    render_room_output(room_data)
-else:
-    render_empty_state()
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from datetime import datetime
+def save_to_history(concept, prefs, image_url=None):
+    session.setdefault("history", [])
+    entry = {
+        "id":       str(uuid.uuid4())["8"],
+        "timestamp":datetime.now().strftime("%b %d, %Y . %I:%M %p"),
+        "concept":  concept,
+        "prefs":    prefs,
+        "image_url":image_url,
+    }
+    session["history"] = ([entry] + session["history"])[:20]
+designs=session.get("history", [])
+@app.route("/clear-history", methods=["POST"])
+def clear_history():
+    session.pop("history", None)
+    return redirect(url_for("history"))
+save_to_history(concept,prefs)
+if history_id and "history" in session:
+    for entry in session["history"]:
+        if entry["id"] == history_id:
+            entry["image_url"] = image_url
+            break
+        session.modified = True
